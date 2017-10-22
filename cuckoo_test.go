@@ -182,3 +182,50 @@ func TestFilter_Exists(t *testing.T) {
 		}
 	}
 }
+
+func TestFilter_Delete(t *testing.T) {
+	f := StdFilter()
+	for _, s := range []string{"hello", "hello, World", "This Worked"} {
+		f.Insert([]byte(s))
+	}
+
+	tests := []struct {
+		item  string
+		ok    bool
+		count uint64
+	}{
+		{
+			item:  "hello",
+			ok:    true,
+			count: 2,
+		},
+
+		{
+			item:  "hello, World",
+			ok:    true,
+			count: 1,
+		},
+
+		{
+			item:  "This is test",
+			count: 1,
+		},
+
+		{
+			item:  "This Worked",
+			ok:    true,
+			count: 0,
+		},
+	}
+
+	for _, c := range tests {
+		ok := f.Delete([]byte(c.item))
+		if ok != c.ok {
+			t.Fatalf("extected %s item to give %t but gave %t", c.item, c.ok, ok)
+		}
+
+		if f.Count() != c.count {
+			t.Fatalf("expected %d count but got %d", c.count, f.Count())
+		}
+	}
+}
