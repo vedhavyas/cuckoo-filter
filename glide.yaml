@@ -1,0 +1,4 @@
+package: github.com/vedhavyas/cuckoo-filter
+import:
+- package: github.com/spaolacci/murmur3
+  version: ^1.0.0

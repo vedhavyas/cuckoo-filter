@@ -1,6 +1,6 @@
 # Cuckoo Filter
 
-Practically better than Bloom. Implemented from this [paper](https://www.cs.cmu.edu/~dga/papers/cuckoo-conext2014.pdf)
+Practically better than Bloom Filter. Paper can be found [here.](https://www.cs.cmu.edu/~dga/papers/cuckoo-conext2014.pdf)
 
 --
     import "github.com/vedhavyas/cuckoo-filter"
