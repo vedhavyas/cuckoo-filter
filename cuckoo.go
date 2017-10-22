@@ -12,10 +12,10 @@ import (
 )
 
 const (
-	DefaultBucketSize        = 4
-	DefaultTotalBuckets      = 250000
-	DefaultMaxKick           = 500
-	DefaultFaultPositiveRate = 3
+	defaultBucketSize        = 4
+	defaultTotalBuckets      = 250000
+	defaultMaxKicks          = 500
+	defaultFaultPositiveRate = 3
 	seed                     = 59053
 )
 
@@ -25,10 +25,10 @@ var emptyFingerprint []byte
 // fingerprint of the item
 type fingerprint []byte
 
-// bucket with b fingerprint per bucket
+// bucket with b fingerprints per bucket
 type bucket []fingerprint
 
-// Filter holds the bucket
+// Filter is the cuckoo-filter
 type Filter struct {
 	count             uint64
 	buckets           []bucket
@@ -49,6 +49,7 @@ func calculateFingerprintSizeInBytes(e float64, b uint64) int {
 	return int(math.Ceil((math.Log(float64(100)/e) + math.Log(2*float64(b))) / 8))
 }
 
+// hashOf returns the 64-bit hash
 func hashOf(x []byte, hash hash.Hash64) uint64 {
 	hash.Reset()
 	hash.Write(x)
@@ -73,6 +74,7 @@ func indicesOf(x []byte, fph, totalBuckets uint64, hash hash.Hash64) (i1, i2 uin
 	return i1, i2
 }
 
+// initBuckets initialises the buckets
 func initBuckets(totalBuckets uint64, bucketSize int) []bucket {
 	buckets := make([]bucket, totalBuckets, totalBuckets)
 	for i := range buckets {
@@ -82,20 +84,21 @@ func initBuckets(totalBuckets uint64, bucketSize int) []bucket {
 	return buckets
 }
 
-// StdFilter returns filter with default values
+// StdFilter returns Standard Cuckoo-Filter
 func StdFilter() *Filter {
 	return &Filter{
-		buckets:           initBuckets(DefaultTotalBuckets, DefaultBucketSize),
-		falsePositiveRate: DefaultFaultPositiveRate,
-		bucketSize:        DefaultBucketSize,
-		totalBuckets:      DefaultTotalBuckets,
-		fingerprintSize:   calculateFingerprintSizeInBytes(DefaultFaultPositiveRate, DefaultBucketSize),
+		buckets:           initBuckets(defaultTotalBuckets, defaultBucketSize),
+		falsePositiveRate: defaultFaultPositiveRate,
+		bucketSize:        defaultBucketSize,
+		totalBuckets:      defaultTotalBuckets,
+		fingerprintSize:   calculateFingerprintSizeInBytes(defaultFaultPositiveRate, defaultBucketSize),
 		hash:              murmur3.New64WithSeed(seed),
-		maxKicks:          DefaultMaxKick,
+		maxKicks:          defaultMaxKicks,
 		mu:                &sync.RWMutex{},
 	}
 }
 
+// deleteFrom deletes fingerprint from bucket if exists
 func deleteFrom(b bucket, fp fingerprint) bool {
 	for i := range b {
 		if !bytes.Equal(b[i], fp) {
@@ -109,6 +112,7 @@ func deleteFrom(b bucket, fp fingerprint) bool {
 	return false
 }
 
+// containsIn returns if the given fingerprint exists in bucket
 func containsIn(b bucket, fp fingerprint) bool {
 	for i := range b {
 		if bytes.Equal(b[i], fp) {
@@ -133,6 +137,7 @@ func addToBucket(b bucket, fp fingerprint) bool {
 	return false
 }
 
+// replaceItem replaces fingerprint from i and returns the alternate index for kicked fingerprint
 func replaceItem(f *Filter, i uint64, fp fingerprint) (j uint64, rfp fingerprint) {
 	k := rand.Intn(len(f.buckets[i]))
 	rfp = f.buckets[i][k]
@@ -142,6 +147,7 @@ func replaceItem(f *Filter, i uint64, fp fingerprint) (j uint64, rfp fingerprint
 	return j, rfp
 }
 
+// insert inserts the item into filter
 func insert(f *Filter, x []byte) (err error) {
 	fp, fph := fingerprintOf(x, f.fingerprintSize, f.hash)
 	i1, i2 := indicesOf(x, fph, f.totalBuckets, f.hash)
@@ -168,6 +174,7 @@ func insert(f *Filter, x []byte) (err error) {
 	return fmt.Errorf("reached max kicks: %d", f.maxKicks)
 }
 
+// exists checks if the item x existence in filter
 func exists(f *Filter, x []byte) bool {
 	fp, fph := fingerprintOf(x, f.fingerprintSize, f.hash)
 	i1, i2 := indicesOf(x, fph, f.totalBuckets, f.hash)
@@ -179,6 +186,7 @@ func exists(f *Filter, x []byte) bool {
 	return false
 }
 
+// deleteItem deletes item if present from the filter
 func deleteItem(f *Filter, x []byte) (ok bool) {
 	fp, fph := fingerprintOf(x, f.fingerprintSize, f.hash)
 	i1, i2 := indicesOf(x, fph, f.totalBuckets, f.hash)
