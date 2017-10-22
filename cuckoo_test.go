@@ -46,14 +46,14 @@ func Test_fingerprintOf(t *testing.T) {
 			b: []byte("hello"),
 			s: 3,
 			r: []byte{144, 95, 145},
-			h: 10403193130508565092,
+			h: 8651376299443352107,
 		},
 
 		{
 			b: []byte(strconv.Itoa(12345)),
 			s: 5,
 			r: []byte{245, 110, 76, 206, 27},
-			h: 17685157234837869622,
+			h: 8434292657151302308,
 		},
 	}
 
@@ -66,6 +66,51 @@ func Test_fingerprintOf(t *testing.T) {
 
 		if fph != c.h {
 			t.Fatalf("expected %d hash but got %d", c.h, fph)
+		}
+	}
+}
+
+func Test_addToBucket(t *testing.T) {
+	tests := []struct {
+		i  uint64
+		fp fingerprint
+		r  bool
+	}{
+		{
+			i:  100,
+			fp: []byte{100, 123},
+			r:  true,
+		},
+
+		{
+			i:  100,
+			fp: []byte{100, 123},
+			r:  true,
+		},
+
+		{
+			i:  100,
+			fp: []byte{100, 123},
+			r:  true,
+		},
+
+		{
+			i:  100,
+			fp: []byte{100, 123},
+			r:  true,
+		},
+
+		{
+			i:  100,
+			fp: []byte{100, 123},
+		},
+	}
+
+	f := DefaultFilter()
+	for _, c := range tests {
+		r := addToBucket(f.buckets[c.i], c.fp)
+		if r != c.r {
+			t.Fatalf("expected %t but got %t", c.r, r)
 		}
 	}
 }
