@@ -2,13 +2,11 @@ package cuckoo
 
 import (
 	"bytes"
+	"fmt"
 	"hash"
 	"math"
-	"sync"
-
 	"math/rand"
-
-	"fmt"
+	"sync"
 
 	"github.com/spaolacci/murmur3"
 )
@@ -84,8 +82,8 @@ func initBuckets(totalBuckets uint64, bucketSize int) []bucket {
 	return buckets
 }
 
-// DefaultFilter returns filter with default values
-func DefaultFilter() *Filter {
+// StdFilter returns filter with default values
+func StdFilter() *Filter {
 	return &Filter{
 		buckets:           initBuckets(DefaultTotalBuckets, DefaultBucketSize),
 		falsePositiveRate: DefaultFaultPositiveRate,
@@ -94,6 +92,7 @@ func DefaultFilter() *Filter {
 		fingerprintSize:   calculateFingerprintSizeInBytes(DefaultFaultPositiveRate, DefaultBucketSize),
 		hash:              murmur3.New64WithSeed(seed),
 		maxKicks:          DefaultMaxKick,
+		mu:                &sync.RWMutex{},
 	}
 }
 
@@ -143,9 +142,15 @@ func replaceItem(f *Filter, i uint64, fp fingerprint) (j uint64, rfp fingerprint
 	return j, rfp
 }
 
-func insert(f *Filter, x []byte) error {
+func insert(f *Filter, x []byte) (err error) {
 	fp, fph := fingerprintOf(x, f.fingerprintSize, f.hash)
 	i1, i2 := indicesOf(x, fph, f.totalBuckets, f.hash)
+
+	defer func() {
+		if err == nil {
+			f.count++
+		}
+	}()
 
 	if addToBucket(f.buckets[i1], fp) || addToBucket(f.buckets[i2], fp) {
 		return nil
@@ -174,9 +179,15 @@ func exists(f *Filter, x []byte) bool {
 	return false
 }
 
-func deleteItem(f *Filter, x []byte) bool {
+func deleteItem(f *Filter, x []byte) (ok bool) {
 	fp, fph := fingerprintOf(x, f.fingerprintSize, f.hash)
 	i1, i2 := indicesOf(x, fph, f.totalBuckets, f.hash)
+
+	defer func() {
+		if ok {
+			f.count--
+		}
+	}()
 
 	if deleteFrom(f.buckets[i1], fp) || deleteFrom(f.buckets[i2], fp) {
 		return true
@@ -208,4 +219,12 @@ func (f *Filter) Delete(x []byte) bool {
 	defer f.mu.Unlock()
 
 	return deleteItem(f, x)
+}
+
+// Count returns total inserted items into filter
+func (f *Filter) Count() uint64 {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	return f.count
 }

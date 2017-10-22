@@ -106,11 +106,41 @@ func Test_addToBucket(t *testing.T) {
 		},
 	}
 
-	f := DefaultFilter()
+	f := StdFilter()
 	for _, c := range tests {
 		r := addToBucket(f.buckets[c.i], c.fp)
 		if r != c.r {
 			t.Fatalf("expected %t but got %t", c.r, r)
+		}
+	}
+}
+
+func TestFilter_Insert(t *testing.T) {
+	tests := []struct {
+		item  string
+		count uint64
+	}{
+		{
+			item:  "hello",
+			count: 1,
+		},
+
+		{
+			item:  "hello, World",
+			count: 2,
+		},
+
+		{
+			item:  "hello, World",
+			count: 3,
+		},
+	}
+
+	f := StdFilter()
+	for _, c := range tests {
+		f.Insert([]byte(c.item))
+		if f.Count() != c.count {
+			t.Fatalf("expected %d count but got %d", c.count, f.Count())
 		}
 	}
 }
