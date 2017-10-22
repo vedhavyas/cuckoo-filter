@@ -97,6 +97,19 @@ func DefaultFilter() *Filter {
 	}
 }
 
+func deleteFrom(b bucket, fp fingerprint) bool {
+	for i := range b {
+		if !bytes.Equal(b[i], fp) {
+			continue
+		}
+
+		b[i] = emptyFingerprint
+		return true
+	}
+
+	return false
+}
+
 func containsIn(b bucket, fp fingerprint) bool {
 	for i := range b {
 		if bytes.Equal(b[i], fp) {
@@ -161,6 +174,17 @@ func exists(f *Filter, x []byte) bool {
 	return false
 }
 
+func deleteItem(f *Filter, x []byte) bool {
+	fp, fph := fingerprintOf(x, f.fingerprintSize, f.hash)
+	i1, i2 := indicesOf(x, fph, f.totalBuckets, f.hash)
+
+	if deleteFrom(f.buckets[i1], fp) || deleteFrom(f.buckets[i2], fp) {
+		return true
+	}
+
+	return false
+}
+
 // Insert inserts the item to the filter
 // returns error of filter is full
 func (f *Filter) Insert(x []byte) error {
@@ -176,4 +200,12 @@ func (f *Filter) Exists(x []byte) bool {
 	defer f.mu.RUnlock()
 
 	return exists(f, x)
+}
+
+// Delete deletes the item from the filter
+func (f *Filter) Delete(x []byte) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return deleteItem(f, x)
 }
