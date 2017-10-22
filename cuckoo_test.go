@@ -144,3 +144,41 @@ func TestFilter_Insert(t *testing.T) {
 		}
 	}
 }
+
+func TestFilter_Exists(t *testing.T) {
+	f := StdFilter()
+	for _, s := range []string{"hello", "hello, World", "This Worked"} {
+		f.Insert([]byte(s))
+	}
+
+	tests := []struct {
+		item  string
+		exist bool
+	}{
+		{
+			item:  "hello",
+			exist: true,
+		},
+
+		{
+			item:  "hello, World",
+			exist: true,
+		},
+
+		{
+			item: "This is test",
+		},
+
+		{
+			item:  "This Worked",
+			exist: true,
+		},
+	}
+
+	for _, c := range tests {
+		ok := f.Exists([]byte(c.item))
+		if ok != c.exist {
+			t.Fatalf("extected %s item to give %t but gave %t", c.item, c.exist, ok)
+		}
+	}
+}
