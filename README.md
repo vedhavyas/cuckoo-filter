@@ -38,12 +38,12 @@ func (f *Filter) Delete(x []byte) bool
 ```
 Delete deletes the item from the filter
 
-#### func (*Filter) Exists
+#### func (*Filter) Lookup
 
 ```go
-func (f *Filter) Exists(x []byte) bool
+func (f *Filter) Lookup(x []byte) bool
 ```
-Exist says if the given items exists in filter
+Lookup says if the given items exists in filter
 
 #### func (*Filter) Insert
 

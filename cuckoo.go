@@ -2,7 +2,6 @@ package cuckoo
 
 import (
 	"bytes"
-	"fmt"
 	"hash"
 	"math"
 	"math/rand"
@@ -148,18 +147,18 @@ func replaceItem(f *Filter, i uint64, fp fingerprint) (j uint64, rfp fingerprint
 }
 
 // insert inserts the item into filter
-func insert(f *Filter, x []byte) (err error) {
+func insert(f *Filter, x []byte) (ok bool) {
 	fp, fph := fingerprintOf(x, f.fingerprintSize, f.hash)
 	i1, i2 := indicesOf(x, fph, f.totalBuckets, f.hash)
 
 	defer func() {
-		if err == nil {
+		if ok {
 			f.count++
 		}
 	}()
 
 	if addToBucket(f.buckets[i1], fp) || addToBucket(f.buckets[i2], fp) {
-		return nil
+		return true
 	}
 
 	is := []uint64{i1, i2}
@@ -167,11 +166,11 @@ func insert(f *Filter, x []byte) (err error) {
 	for k := 0; k < f.maxKicks; k++ {
 		i1, fp = replaceItem(f, i1, fp)
 		if addToBucket(f.buckets[i1], fp) {
-			return nil
+			return true
 		}
 	}
 
-	return fmt.Errorf("reached max kicks: %d", f.maxKicks)
+	return false
 }
 
 // exists checks if the item x existence in filter
@@ -206,15 +205,15 @@ func deleteItem(f *Filter, x []byte) (ok bool) {
 
 // Insert inserts the item to the filter
 // returns error of filter is full
-func (f *Filter) Insert(x []byte) error {
+func (f *Filter) Insert(x []byte) bool {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
 	return insert(f, x)
 }
 
-// Exist says if the given items exists in filter
-func (f *Filter) Exists(x []byte) bool {
+// Lookup says if the given items exists in filter
+func (f *Filter) Lookup(x []byte) bool {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 

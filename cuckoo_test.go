@@ -176,7 +176,7 @@ func TestFilter_Exists(t *testing.T) {
 	}
 
 	for _, c := range tests {
-		ok := f.Exists([]byte(c.item))
+		ok := f.Lookup([]byte(c.item))
 		if ok != c.exist {
 			t.Fatalf("extected %s item to give %t but gave %t", c.item, c.exist, ok)
 		}
