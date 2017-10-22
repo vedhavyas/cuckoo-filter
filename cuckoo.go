@@ -97,6 +97,16 @@ func DefaultFilter() *Filter {
 	}
 }
 
+func containsIn(b bucket, fp fingerprint) bool {
+	for i := range b {
+		if bytes.Equal(b[i], fp) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // addToBucket will add fp to the bucket i in filter
 func addToBucket(b bucket, fp fingerprint) bool {
 	for j := range b {
@@ -140,14 +150,16 @@ func insert(f *Filter, x []byte) error {
 	return fmt.Errorf("reached max kicks: %d", f.maxKicks)
 }
 
-//func exists(f *Filter, x []byte) bool {
-//	fp, fph := fingerprintOf(x, f.fingerprintSize, f.hash)
-//	i1, i2 := indicesOf(x, fph, f.totalBuckets, f.hash)
-//
-//	if addToBucket(f, i1, fp) || addToBucket(f, i2, fp) {
-//		return tr
-//	}
-//}
+func exists(f *Filter, x []byte) bool {
+	fp, fph := fingerprintOf(x, f.fingerprintSize, f.hash)
+	i1, i2 := indicesOf(x, fph, f.totalBuckets, f.hash)
+
+	if containsIn(f.buckets[i1], fp) || containsIn(f.buckets[i2], fp) {
+		return true
+	}
+
+	return false
+}
 
 // Insert inserts the item to the filter
 // returns error of filter is full
@@ -156,4 +168,12 @@ func (f *Filter) Insert(x []byte) error {
 	defer f.mu.Unlock()
 
 	return insert(f, x)
+}
+
+// Exist says if the given items exists in filter
+func (f *Filter) Exists(x []byte) bool {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	return exists(f, x)
 }
