@@ -3,7 +3,6 @@ package cuckoo
 import (
 	"encoding/binary"
 	"hash"
-	"math"
 	"math/rand"
 	"sync"
 
@@ -11,11 +10,10 @@ import (
 )
 
 const (
-	defaultBucketSize        = 4
-	defaultTotalBuckets      = 250000
-	defaultMaxKicks          = 500
-	defaultFaultPositiveRate = 3
-	seed                     = 59053
+	defaultBucketSize   = 8
+	defaultTotalBuckets = 4000000
+	defaultMaxKicks     = 500
+	seed                = 59053
 )
 
 // emptyFingerprint represents an empty fingerprint
@@ -34,18 +32,11 @@ type Filter struct {
 	falsePositiveRate float64
 	bucketSize        uint64
 	totalBuckets      uint64
-	fingerprintSize   int
 	hash              hash.Hash64
 	maxKicks          int
 
 	// protects above fields
 	mu *sync.RWMutex
-}
-
-// calculateFingerprintSize calculates the fingerprint size from
-// e - false positive percent and b - bucket size
-func calculateFingerprintSizeInBytes(e float64, b uint64) int {
-	return int(math.Ceil((math.Log(float64(100)/e) + math.Log(2*float64(b))) / 8))
 }
 
 // hashOf returns the 64-bit hash
@@ -56,7 +47,7 @@ func hashOf(x []byte, hash hash.Hash64) uint64 {
 }
 
 // fingerprintOf returns the fingerprint of x with size using hash
-func fingerprintOf(x []byte, fpSize int, hash hash.Hash64) (fp fingerprint, fph uint64) {
+func fingerprintOf(x []byte, hash hash.Hash64) (fp fingerprint, fph uint64) {
 	hash.Reset()
 	hash.Write(x)
 	h := hash.Sum(nil)
@@ -86,14 +77,12 @@ func initBuckets(totalBuckets uint64, bucketSize int) []bucket {
 // StdFilter returns Standard Cuckoo-Filter
 func StdFilter() *Filter {
 	return &Filter{
-		buckets:           initBuckets(defaultTotalBuckets, defaultBucketSize),
-		falsePositiveRate: defaultFaultPositiveRate,
-		bucketSize:        defaultBucketSize,
-		totalBuckets:      defaultTotalBuckets,
-		fingerprintSize:   calculateFingerprintSizeInBytes(defaultFaultPositiveRate, defaultBucketSize),
-		hash:              murmur3.New64WithSeed(seed),
-		maxKicks:          defaultMaxKicks,
-		mu:                &sync.RWMutex{},
+		buckets:      initBuckets(defaultTotalBuckets, defaultBucketSize),
+		bucketSize:   defaultBucketSize,
+		totalBuckets: defaultTotalBuckets,
+		hash:         murmur3.New64WithSeed(seed),
+		maxKicks:     defaultMaxKicks,
+		mu:           &sync.RWMutex{},
 	}
 }
 
@@ -150,7 +139,7 @@ func replaceItem(f *Filter, i uint64, fp fingerprint) (j uint64, rfp fingerprint
 
 // insert inserts the item into filter
 func insert(f *Filter, x []byte) (ok bool) {
-	fp, fph := fingerprintOf(x, f.fingerprintSize, f.hash)
+	fp, fph := fingerprintOf(x, f.hash)
 	i1, i2 := indicesOf(x, fph, f.totalBuckets, f.hash)
 
 	defer func() {
@@ -177,7 +166,7 @@ func insert(f *Filter, x []byte) (ok bool) {
 
 // lookup checks if the item x existence in filter
 func lookup(f *Filter, x []byte) bool {
-	fp, fph := fingerprintOf(x, f.fingerprintSize, f.hash)
+	fp, fph := fingerprintOf(x, f.hash)
 	i1, i2 := indicesOf(x, fph, f.totalBuckets, f.hash)
 
 	if containsIn(f.buckets[i1], fp) || containsIn(f.buckets[i2], fp) {
@@ -189,7 +178,7 @@ func lookup(f *Filter, x []byte) bool {
 
 // deleteItem deletes item if present from the filter
 func deleteItem(f *Filter, x []byte) (ok bool) {
-	fp, fph := fingerprintOf(x, f.fingerprintSize, f.hash)
+	fp, fph := fingerprintOf(x, f.hash)
 	i1, i2 := indicesOf(x, fph, f.totalBuckets, f.hash)
 
 	defer func() {
