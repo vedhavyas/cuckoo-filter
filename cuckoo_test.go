@@ -1,7 +1,6 @@
 package cuckoo
 
 import (
-	"bytes"
 	"strconv"
 	"testing"
 
@@ -39,28 +38,28 @@ func Test_fingerprintOf(t *testing.T) {
 	tests := []struct {
 		b []byte
 		s int
-		r []byte
+		r fingerprint
 		h uint64
 	}{
 		{
 			b: []byte("hello"),
 			s: 3,
-			r: []byte{144, 95, 145},
-			h: 8651376299443352107,
+			r: 36959,
+			h: 12338335298928788839,
 		},
 
 		{
 			b: []byte(strconv.Itoa(12345)),
 			s: 5,
-			r: []byte{245, 110, 76, 206, 27},
-			h: 8434292657151302308,
+			r: 62830,
+			h: 2238787319979236306,
 		},
 	}
 
 	h := murmur3.New64WithSeed(1234)
 	for _, c := range tests {
 		fp, fph := fingerprintOf(c.b, c.s, h)
-		if !bytes.Equal(fp, c.r) {
+		if c.r != fp {
 			t.Fatalf("expected %v bytes but got %v", c.r, fp)
 		}
 
@@ -78,31 +77,20 @@ func Test_addToBucket(t *testing.T) {
 	}{
 		{
 			i:  100,
-			fp: []byte{100, 123},
+			fp: 36959,
 			r:  true,
 		},
 
 		{
-			i:  100,
-			fp: []byte{100, 123},
+			i:  120,
+			fp: 1232,
 			r:  true,
 		},
 
 		{
-			i:  100,
-			fp: []byte{100, 123},
+			i:  156400,
+			fp: 7626,
 			r:  true,
-		},
-
-		{
-			i:  100,
-			fp: []byte{100, 123},
-			r:  true,
-		},
-
-		{
-			i:  100,
-			fp: []byte{100, 123},
 		},
 	}
 
@@ -166,7 +154,7 @@ func TestFilter_Exists(t *testing.T) {
 		},
 
 		{
-			item: "This is test",
+			item: "This is test11",
 		},
 
 		{

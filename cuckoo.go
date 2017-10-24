@@ -1,7 +1,7 @@
 package cuckoo
 
 import (
-	"bytes"
+	"encoding/binary"
 	"hash"
 	"math"
 	"math/rand"
@@ -19,10 +19,10 @@ const (
 )
 
 // emptyFingerprint represents an empty fingerprint
-var emptyFingerprint []byte
+var emptyFingerprint fingerprint
 
 // fingerprint of the item
-type fingerprint []byte
+type fingerprint uint16
 
 // bucket with b fingerprints per bucket
 type bucket []fingerprint
@@ -59,9 +59,9 @@ func hashOf(x []byte, hash hash.Hash64) uint64 {
 func fingerprintOf(x []byte, fpSize int, hash hash.Hash64) (fp fingerprint, fph uint64) {
 	hash.Reset()
 	hash.Write(x)
-	fp = make(fingerprint, fpSize)
-	copy(fp, hash.Sum(nil))
-	return fp, hashOf(fp, hash)
+	h := hash.Sum(nil)
+	ufp := binary.BigEndian.Uint16(h)
+	return fingerprint(ufp), hashOf(h[:2], hash)
 }
 
 // indicesOf returns the indices of item x using given hash
@@ -100,7 +100,7 @@ func StdFilter() *Filter {
 // deleteFrom deletes fingerprint from bucket if exists
 func deleteFrom(b bucket, fp fingerprint) bool {
 	for i := range b {
-		if !bytes.Equal(b[i], fp) {
+		if b[i] != fp {
 			continue
 		}
 
@@ -114,7 +114,7 @@ func deleteFrom(b bucket, fp fingerprint) bool {
 // containsIn returns if the given fingerprint exists in bucket
 func containsIn(b bucket, fp fingerprint) bool {
 	for i := range b {
-		if bytes.Equal(b[i], fp) {
+		if b[i] == fp {
 			return true
 		}
 	}
@@ -125,7 +125,7 @@ func containsIn(b bucket, fp fingerprint) bool {
 // addToBucket will add fp to the bucket i in filter
 func addToBucket(b bucket, fp fingerprint) bool {
 	for j := range b {
-		if !bytes.Equal(b[j], emptyFingerprint) {
+		if b[j] != emptyFingerprint {
 			continue
 		}
 
@@ -141,7 +141,9 @@ func replaceItem(f *Filter, i uint64, fp fingerprint) (j uint64, rfp fingerprint
 	k := rand.Intn(len(f.buckets[i]))
 	rfp = f.buckets[i][k]
 	f.buckets[i][k] = fp
-	rfph := hashOf(rfp, f.hash)
+	b := make([]byte, 2, 2)
+	binary.BigEndian.PutUint16(b, uint16(fp))
+	rfph := hashOf(b, f.hash)
 	j = (i ^ rfph) % f.totalBuckets
 	return j, rfp
 }
