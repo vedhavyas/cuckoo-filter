@@ -1,6 +1,6 @@
 /*
 Benchmark tests taken from https://github.com/mtchavez/cuckoo
- */
+*/
 package cuckoo
 
 import (
@@ -54,7 +54,7 @@ func BenchmarkInsertUnique(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ok = filter.Insert(values[i%totalWords])
+		ok = filter.InsertUnique(values[i%totalWords])
 	}
 
 	okay = ok

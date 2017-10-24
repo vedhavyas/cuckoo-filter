@@ -212,6 +212,14 @@ func (f *Filter) Insert(x []byte) bool {
 	return insert(f, x)
 }
 
+// InsertUnique inserts only unique items
+func (f *Filter) InsertUnique(x []byte) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return exists(f, x) || insert(f, x)
+}
+
 // Lookup says if the given items exists in filter
 func (f *Filter) Lookup(x []byte) bool {
 	f.mu.RLock()
