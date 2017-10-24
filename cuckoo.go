@@ -173,8 +173,8 @@ func insert(f *Filter, x []byte) (ok bool) {
 	return false
 }
 
-// exists checks if the item x existence in filter
-func exists(f *Filter, x []byte) bool {
+// lookup checks if the item x existence in filter
+func lookup(f *Filter, x []byte) bool {
 	fp, fph := fingerprintOf(x, f.fingerprintSize, f.hash)
 	i1, i2 := indicesOf(x, fph, f.totalBuckets, f.hash)
 
@@ -217,15 +217,15 @@ func (f *Filter) InsertUnique(x []byte) bool {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	return exists(f, x) || insert(f, x)
+	return lookup(f, x) || insert(f, x)
 }
 
-// Lookup says if the given items exists in filter
+// Lookup says if the given item exists in filter
 func (f *Filter) Lookup(x []byte) bool {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 
-	return exists(f, x)
+	return lookup(f, x)
 }
 
 // Delete deletes the item from the filter
