@@ -90,3 +90,31 @@ func BenchmarkLookup(b *testing.B) {
 
 	okay = ok
 }
+
+func BenchmarkDelete(b *testing.B) {
+	var ok bool
+	filter := StdFilter()
+	fd, _ := os.Open("/usr/share/dict/words")
+	defer fd.Close()
+
+	scanner := bufio.NewScanner(fd)
+	var wordCount int
+	var totalWords int
+	var values [][]byte
+	for scanner.Scan() {
+		word := []byte(scanner.Text())
+		totalWords++
+
+		if filter.Insert(word) {
+			wordCount++
+		}
+		values = append(values, word)
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		ok = filter.Delete(values[i%totalWords])
+	}
+
+	okay = ok
+}

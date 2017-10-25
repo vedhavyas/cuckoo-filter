@@ -15,14 +15,14 @@ func Test_fingerprintOf(t *testing.T) {
 	}{
 		{
 			b: []byte("hello"),
-			r: 36959,
-			h: 12338335298928788839,
+			r: 26725,
+			h: 12027140842659985391,
 		},
 
 		{
 			b: []byte(strconv.Itoa(12345)),
-			r: 62830,
-			h: 2238787319979236306,
+			r: 12594,
+			h: 15273570455892234865,
 		},
 	}
 
@@ -72,6 +72,20 @@ func Test_addToBucket(t *testing.T) {
 		}
 	}
 }
+
+//func TestFilter_InsertLoad(t *testing.T) {
+//	filter := StdFilter()
+//	var i int
+//	for {
+//		ok := filter.Insert([]byte(fmt.Sprintf("item-%d", i)))
+//		if !ok {
+//			break
+//		}
+//		i++
+//	}
+//
+//	fmt.Println(i, float64(filter.count)/float64(filter.totalBuckets*uint64(filter.bucketSize)))
+//}
 
 func TestFilter_Insert(t *testing.T) {
 	tests := []struct {
