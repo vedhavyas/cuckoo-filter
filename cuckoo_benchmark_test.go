@@ -14,6 +14,7 @@ var filter *Filter
 var okay bool
 
 func BenchmarkCuckooNew(b *testing.B) {
+	b.ReportAllocs()
 	var f *Filter
 	for i := 0; i < b.N; i++ {
 		f = StdFilter()
@@ -25,6 +26,7 @@ func BenchmarkCuckooNew(b *testing.B) {
 func BenchmarkInsert(b *testing.B) {
 	var ok bool
 	filter := StdFilter()
+	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ok = filter.Insert([]byte(fmt.Sprintf("item-%d", i%50000)))
@@ -52,6 +54,7 @@ func BenchmarkInsertUnique(b *testing.B) {
 		}
 		values = append(values, word)
 	}
+	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ok = filter.InsertUnique(values[i%totalWords])
@@ -79,6 +82,7 @@ func BenchmarkLookup(b *testing.B) {
 		}
 		values = append(values, word)
 	}
+	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		ok = filter.Lookup(values[i%totalWords])
