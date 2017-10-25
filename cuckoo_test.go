@@ -73,20 +73,6 @@ func Test_addToBucket(t *testing.T) {
 	}
 }
 
-//func TestFilter_InsertLoad(t *testing.T) {
-//	filter := StdFilter()
-//	var i int
-//	for {
-//		ok := filter.Insert([]byte(fmt.Sprintf("item-%d", i)))
-//		if !ok {
-//			break
-//		}
-//		i++
-//	}
-//
-//	fmt.Println(i, float64(filter.count)/float64(filter.totalBuckets*uint64(filter.bucketSize)))
-//}
-
 func TestFilter_Insert(t *testing.T) {
 	tests := []struct {
 		item  string
