@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	defaultBucketSize   = 8
+	defaultBucketSize   = 4
 	defaultTotalBuckets = 4000000
 	defaultMaxKicks     = 500
 	seed                = 59053
