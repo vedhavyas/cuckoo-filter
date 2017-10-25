@@ -11,29 +11,28 @@ import (
 
 const (
 	defaultBucketSize   = 4
-	defaultTotalBuckets = 4000000
+	defaultTotalBuckets = 4 << 20
 	defaultMaxKicks     = 500
 	seed                = 59053
 )
 
-// emptyFingerprint represents an empty fingerprint
-var emptyFingerprint fingerprint
-
 // fingerprint of the item
 type fingerprint uint16
+
+// emptyFingerprint represents an empty fingerprint
+var emptyFingerprint fingerprint
 
 // bucket with b fingerprints per bucket
 type bucket []fingerprint
 
 // Filter is the cuckoo-filter
 type Filter struct {
-	count             uint64
-	buckets           []bucket
-	falsePositiveRate float64
-	bucketSize        uint64
-	totalBuckets      uint64
-	hash              hash.Hash64
-	maxKicks          int
+	count        uint64
+	buckets      []bucket
+	bucketSize   uint8
+	totalBuckets uint64
+	hash         hash.Hash64
+	maxKicks     uint16
 
 	// protects above fields
 	mu *sync.RWMutex
@@ -154,7 +153,7 @@ func insert(f *Filter, x []byte) (ok bool) {
 
 	is := []uint64{i1, i2}
 	i1 = is[rand.Intn(len(is))]
-	for k := 0; k < f.maxKicks; k++ {
+	for k := uint16(0); k < f.maxKicks; k++ {
 		i1, fp = replaceItem(f, i1, fp)
 		if addToBucket(f.buckets[i1], fp) {
 			return true
