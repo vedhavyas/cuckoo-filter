@@ -11,22 +11,22 @@ func Test_fingerprintOf(t *testing.T) {
 	tests := []struct {
 		b []byte
 		r fingerprint
-		h uint64
+		h uint
 	}{
 		{
 			b: []byte("hello"),
-			r: 36959,
-			h: 12338335298928788839,
+			r: 26725,
+			h: 19595036,
 		},
 
 		{
 			b: []byte(strconv.Itoa(12345)),
-			r: 62830,
-			h: 2238787319979236306,
+			r: 12594,
+			h: 19870548,
 		},
 	}
 
-	h := murmur3.New64WithSeed(1234)
+	h := murmur3.New32WithSeed(1234)
 	for _, c := range tests {
 		fp, fph := fingerprintOf(c.b, h)
 		if c.r != fp {
@@ -76,7 +76,7 @@ func Test_addToBucket(t *testing.T) {
 func TestFilter_Insert(t *testing.T) {
 	tests := []struct {
 		item  string
-		count uint64
+		count uint
 	}{
 		{
 			item:  "hello",
@@ -150,7 +150,7 @@ func TestFilter_Delete(t *testing.T) {
 	tests := []struct {
 		item  string
 		ok    bool
-		count uint64
+		count uint
 	}{
 		{
 			item:  "hello",

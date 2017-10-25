@@ -1,4 +1,3 @@
 package: github.com/vedhavyas/cuckoo-filter
 import:
 - package: github.com/spaolacci/murmur3
-  version: 9f5d223c60793748f04a9d5b4b4eacddfc1f755d
