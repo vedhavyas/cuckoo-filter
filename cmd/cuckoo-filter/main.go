@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	"time"
-
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/vedhavyas/cuckoo-filter"
 )
@@ -62,7 +61,7 @@ func main() {
 
 	ch := make(chan os.Signal)
 	signal.Notify(ch, os.Interrupt)
-	for range ch{
+	for range ch {
 		return
 	}
 }
