@@ -31,7 +31,8 @@ func Test_fingerprintOf(t *testing.T) {
 
 	h := murmur3.New32WithSeed(1234)
 	for _, c := range tests {
-		fp, fph := fingerprintOf(c.b, h)
+		fp := fingerprintOf(c.b)
+		fph := fingerprintHash(fp, h)
 		if c.r != fp {
 			t.Fatalf("expected %v bytes but got %v", c.r, fp)
 		}
