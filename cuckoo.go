@@ -16,7 +16,6 @@ const (
 	seed                = 59053
 )
 
-// TODO max fingerprint
 // fingerprint of the item
 type fingerprint uint16
 
@@ -54,14 +53,23 @@ func initBuckets(totalBuckets uint32, bucketSize uint8) []bucket {
 
 // StdFilter returns Standard Cuckoo-Filter
 func StdFilter() *Filter {
+	return newFilter(defaultTotalBuckets, defaultBucketSize, murmur3.New32WithSeed(seed))
+}
+
+func newFilter(tb uint32, bs uint8, hash hash.Hash32) *Filter {
 	return &Filter{
-		buckets:      initBuckets(defaultTotalBuckets, defaultBucketSize),
-		bucketSize:   defaultBucketSize,
-		totalBuckets: defaultTotalBuckets,
-		hash:         murmur3.New32WithSeed(seed),
+		buckets:      initBuckets(tb, bs),
+		bucketSize:   bs,
+		totalBuckets: tb,
+		hash:         hash,
 		maxKicks:     defaultMaxKicks,
 		mu:           &sync.RWMutex{},
 	}
+}
+
+func NewFilter(count uint32) *Filter {
+	b := nextPowerOf2(count) / defaultBucketSize
+	return newFilter(b, defaultBucketSize, murmur3.New32WithSeed(seed))
 }
 
 // nextPowerOf2 returns the next power 2 >= v
