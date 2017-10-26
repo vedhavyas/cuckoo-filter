@@ -64,6 +64,19 @@ func StdFilter() *Filter {
 	}
 }
 
+// nextPowerOf2 returns the next power 2 >= v
+func nextPowerOf2(v uint32) (n uint32) {
+	var i uint32
+	for i = 2; i < 32; i++ {
+		n = 1 << i
+		if n >= v {
+			break
+		}
+	}
+
+	return n
+}
+
 // deleteFrom deletes fingerprint from bucket if exists
 func deleteFrom(b bucket, fp fingerprint) bool {
 	for i := range b {

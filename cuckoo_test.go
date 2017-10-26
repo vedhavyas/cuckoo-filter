@@ -187,3 +187,42 @@ func TestFilter_Delete(t *testing.T) {
 		}
 	}
 }
+
+func Test_nextPowerOf2(t *testing.T) {
+	tests := []struct {
+		v uint32
+		e uint32
+	}{
+		{
+			v: 1,
+			e: 4,
+		},
+
+		{
+			v: 2,
+			e: 4,
+		},
+
+		{
+			v: 3,
+			e: 4,
+		},
+
+		{
+			v: 4,
+			e: 4,
+		},
+
+		{
+			v: 100,
+			e: 128,
+		},
+	}
+
+	for _, c := range tests {
+		g := nextPowerOf2(c.v)
+		if g != c.e {
+			t.Fatalf("expected %d but got %d", c.e, g)
+		}
+	}
+}
