@@ -69,6 +69,11 @@ func NewFilter(count uint32) *Filter {
 	return newFilter(b, defaultBucketSize, murmur3.New32WithSeed(seed))
 }
 
+func NewFilterWithBucketSize(count uint32, bs uint8) *Filter {
+	b := nextPowerOf2(count) / uint32(bs)
+	return newFilter(b, bs, murmur3.New32WithSeed(seed))
+}
+
 // nextPowerOf2 returns the next power 2 >= v
 func nextPowerOf2(v uint32) (n uint32) {
 	var i uint32

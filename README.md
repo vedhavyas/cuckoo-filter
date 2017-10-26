@@ -71,3 +71,54 @@ LoadFactor returns the load factor of the filter
 func (f *Filter) Lookup(x []byte) bool
 ```
 Lookup says if the given item exists in filter
+
+
+## Benchmarks
+
+### 16 << 20 inserts with bucket size 4
+```
+ Maximum Inserts
+=================
+Expected inserts: 16777216
+Total inserted: 16047821
+Load factor: 0.9565
+First failure at: 16047821
+Time Taken: 20.207010142s
+=================
+
+
+ Lookups
+=================
+Total lookups: 16047821
+Failed lookups: 186
+Expected failed lookups: 0
+Load factor: 0.9565
+Time Taken: 11.708892532s
+=================
+
+Res memory: 280M
+```
+
+### 16 << 20 inserts with bucket size 8
+```
+Maximum Inserts
+=================
+Expected inserts: 16777216
+Total inserted: 16566681
+Load factor: 0.9875
+First failure at: 16566681
+Time Taken: 18.237849646s
+=================
+
+
+ Lookups
+=================
+Total lookups: 16566681
+Failed lookups: 215
+Expected failed lookups: 0
+Load factor: 0.9875
+Time Taken: 11.798103504s
+=================
+
+Res Memory: 176M
+```
