@@ -1,6 +1,8 @@
 # Cuckoo Filter
 
-Practically better than Bloom Filter. Paper can be found [here.](https://www.cs.cmu.edu/~dga/papers/cuckoo-conext2014.pdf)
+Practically better than Bloom Filter. Cuckoo filters support adding and removing items dynamically while achieving even higher performance than Bloom filters. For applications that store many items and target moderately low false positive rates, cuckoo filters have lower space overhead than space-optimized Bloom filters. It is a compact variant of a cuckoo hashtable that stores only fingerprints—a bit string derived from the item using a hash function—for each item inserted, instead of key-value pairs. The filter is densely filled with fingerprints (e.g., 95% entries occupied), which confers high space efficiency.
+
+Paper can be found [here.](https://www.cs.cmu.edu/~dga/papers/cuckoo-conext2014.pdf)
 
 --
     import "github.com/vedhavyas/cuckoo-filter"
