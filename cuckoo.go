@@ -273,3 +273,11 @@ func (f *Filter) Count() uint32 {
 
 	return f.count
 }
+
+// LoadFactor returns the load factor of the filter
+func (f *Filter) LoadFactor() float64 {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	return float64(f.count) / (float64(uint32(f.bucketSize) * f.totalBuckets))
+}
