@@ -16,6 +16,7 @@ const (
 	seed                = 59053
 )
 
+// TODO max fingerprint
 // fingerprint of the item
 type fingerprint uint16
 
@@ -30,10 +31,10 @@ var tempBytes = make([]byte, 2, 2)
 
 // Filter is the cuckoo-filter
 type Filter struct {
-	count        uint
+	count        uint32
 	buckets      []bucket
 	bucketSize   uint8
-	totalBuckets uint
+	totalBuckets uint32
 	hash         hash.Hash32
 	maxKicks     uint16
 
@@ -42,7 +43,7 @@ type Filter struct {
 }
 
 // initBuckets initialises the buckets
-func initBuckets(totalBuckets uint64, bucketSize int) []bucket {
+func initBuckets(totalBuckets uint32, bucketSize uint8) []bucket {
 	buckets := make([]bucket, totalBuckets, totalBuckets)
 	for i := range buckets {
 		buckets[i] = make([]fingerprint, bucketSize, bucketSize)
@@ -103,39 +104,32 @@ func addToBucket(b bucket, fp fingerprint) bool {
 }
 
 // hashOf returns the 32-bit hash
-func hashOf(x []byte, hash hash.Hash32) uint {
+func hashOf(x []byte, hash hash.Hash32) (uint32, []byte) {
 	hash.Reset()
 	hash.Write(x)
-	return uint(hash.Sum32())
+	h := hash.Sum32()
+	return h, []byte{byte(h >> 24), byte(h >> 16), byte(h >> 8), byte(h)}
 }
 
 // fingerprintOf returns the fingerprint of x with size using hash
-func fingerprintOf(x []byte, hash hash.Hash32) (fp fingerprint, fph uint) {
-	ufp := binary.BigEndian.Uint16(x)
-	return fingerprint(ufp), hashOf(x[:2], hash)
+func fingerprintOf(xb []byte, hash hash.Hash32) (fp fingerprint, fph uint32) {
+	fp = fingerprint(binary.BigEndian.Uint16(xb))
+	fph, _ = hashOf(xb[:2], hash)
+	return fp, fph
 }
 
 // indicesOf returns the indices of item x using given hash
-func indicesOf(xh, fph, totalBuckets uint) (i1, i2 uint) {
+func indicesOf(xh, fph, totalBuckets uint32) (i1, i2 uint32) {
 	i1 = xh % totalBuckets
 	i2 = (i1 ^ fph) % totalBuckets
 	return i1, i2
 }
 
-// replaceItem replaces fingerprint from i and returns the alternate index for kicked fingerprint
-func replaceItem(f *Filter, i uint, k int, fp fingerprint) (j uint, rfp fingerprint) {
-	b := f.buckets[i]
-	rfp, b[k] = b[k], fp
-	binary.BigEndian.PutUint16(tempBytes, uint16(fp))
-	rfph := hashOf(tempBytes, f.hash)
-	j = (i ^ rfph) % f.totalBuckets
-	return j, rfp
-}
-
 // insert inserts the item into filter
 func insert(f *Filter, x []byte) (ok bool) {
-	fp, fph := fingerprintOf(x, f.hash)
-	i1, i2 := indicesOf(hashOf(x, f.hash), fph, f.totalBuckets)
+	xh, xb := hashOf(x, f.hash)
+	fp, fph := fingerprintOf(xb, f.hash)
+	i1, i2 := indicesOf(xh, fph, f.totalBuckets)
 
 	defer func() {
 		if ok {
@@ -147,11 +141,10 @@ func insert(f *Filter, x []byte) (ok bool) {
 		return true
 	}
 
-	rn := rand.Int()
-	ri := []uint{i1, i2}[rn%2]
+	ri := []uint32{i1, i2}[rand.Intn(2)]
 	var k uint16
 	for k = 0; k < f.maxKicks; k++ {
-		ri, fp = replaceItem(f, ri, rn%int(f.bucketSize), fp)
+		ri, fp = replaceItem(f, ri, fp)
 		if addToBucket(f.buckets[ri], fp) {
 			return true
 		}
@@ -160,10 +153,22 @@ func insert(f *Filter, x []byte) (ok bool) {
 	return false
 }
 
+// replaceItem replaces fingerprint from i and returns the alternate index for kicked fingerprint
+func replaceItem(f *Filter, i uint32, fp fingerprint) (j uint32, rfp fingerprint) {
+	b := f.buckets[i]
+	k := rand.Intn(len(b))
+	rfp, b[k] = b[k], fp
+	binary.BigEndian.PutUint16(tempBytes, uint16(fp))
+	rfph, _ := hashOf(tempBytes, f.hash)
+	j = (i ^ rfph) % f.totalBuckets
+	return j, rfp
+}
+
 // lookup checks if the item x existence in filter
 func lookup(f *Filter, x []byte) bool {
-	fp, fph := fingerprintOf(x, f.hash)
-	i1, i2 := indicesOf(hashOf(x, f.hash), fph, f.totalBuckets)
+	xh, xb := hashOf(x, f.hash)
+	fp, fph := fingerprintOf(xb, f.hash)
+	i1, i2 := indicesOf(xh, fph, f.totalBuckets)
 
 	if containsIn(f.buckets[i1], fp) || containsIn(f.buckets[i2], fp) {
 		return true
@@ -174,8 +179,9 @@ func lookup(f *Filter, x []byte) bool {
 
 // deleteItem deletes item if present from the filter
 func deleteItem(f *Filter, x []byte) (ok bool) {
-	fp, fph := fingerprintOf(x, f.hash)
-	i1, i2 := indicesOf(hashOf(x, f.hash), fph, f.totalBuckets)
+	xh, xb := hashOf(x, f.hash)
+	fp, fph := fingerprintOf(xb, f.hash)
+	i1, i2 := indicesOf(xh, fph, f.totalBuckets)
 
 	defer func() {
 		if ok {
@@ -261,7 +267,7 @@ func (f *Filter) Delete(x []byte) bool {
 }
 
 // Count returns total inserted items into filter
-func (f *Filter) Count() uint {
+func (f *Filter) Count() uint32 {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 

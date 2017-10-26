@@ -11,7 +11,7 @@ func Test_fingerprintOf(t *testing.T) {
 	tests := []struct {
 		b []byte
 		r fingerprint
-		h uint
+		h uint32
 	}{
 		{
 			b: []byte("hello"),
@@ -76,7 +76,7 @@ func Test_addToBucket(t *testing.T) {
 func TestFilter_Insert(t *testing.T) {
 	tests := []struct {
 		item  string
-		count uint
+		count uint32
 	}{
 		{
 			item:  "hello",
@@ -150,7 +150,7 @@ func TestFilter_Delete(t *testing.T) {
 	tests := []struct {
 		item  string
 		ok    bool
-		count uint
+		count uint32
 	}{
 		{
 			item:  "hello",
