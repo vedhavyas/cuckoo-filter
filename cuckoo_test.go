@@ -1,6 +1,9 @@
 package cuckoo
 
 import (
+	"bufio"
+	"fmt"
+	"os"
 	"strconv"
 	"testing"
 
@@ -11,7 +14,7 @@ func Test_fingerprintOf(t *testing.T) {
 	tests := []struct {
 		b []byte
 		r fingerprint
-		h uint
+		h uint32
 	}{
 		{
 			b: []byte("hello"),
@@ -28,7 +31,8 @@ func Test_fingerprintOf(t *testing.T) {
 
 	h := murmur3.New32WithSeed(1234)
 	for _, c := range tests {
-		fp, fph := fingerprintOf(c.b, h)
+		fp := fingerprintOf(c.b)
+		fph := fingerprintHash(fp, h)
 		if c.r != fp {
 			t.Fatalf("expected %v bytes but got %v", c.r, fp)
 		}
@@ -76,7 +80,7 @@ func Test_addToBucket(t *testing.T) {
 func TestFilter_Insert(t *testing.T) {
 	tests := []struct {
 		item  string
-		count uint
+		count uint32
 	}{
 		{
 			item:  "hello",
@@ -150,7 +154,7 @@ func TestFilter_Delete(t *testing.T) {
 	tests := []struct {
 		item  string
 		ok    bool
-		count uint
+		count uint32
 	}{
 		{
 			item:  "hello",
@@ -186,4 +190,153 @@ func TestFilter_Delete(t *testing.T) {
 			t.Fatalf("expected %d count but got %d", c.count, f.Count())
 		}
 	}
+}
+
+func Test_nextPowerOf2(t *testing.T) {
+	tests := []struct {
+		v uint32
+		e uint32
+	}{
+		{
+			v: 1,
+			e: 4,
+		},
+
+		{
+			v: 2,
+			e: 4,
+		},
+
+		{
+			v: 3,
+			e: 4,
+		},
+
+		{
+			v: 4,
+			e: 4,
+		},
+
+		{
+			v: 100,
+			e: 128,
+		},
+	}
+
+	for _, c := range tests {
+		g := nextPowerOf2(c.v)
+		if g != c.e {
+			t.Fatalf("expected %d but got %d", c.e, g)
+		}
+	}
+}
+
+// Benchmark tests taken from https://github.com/mtchavez/cuckoo
+var filter *Filter
+var okay bool
+
+func BenchmarkCuckooNew(b *testing.B) {
+	b.ReportAllocs()
+	var f *Filter
+	for i := 0; i < b.N; i++ {
+		f = StdFilter()
+	}
+
+	filter = f
+}
+
+func BenchmarkInsert(b *testing.B) {
+	var ok bool
+	filter := StdFilter()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		ok = filter.Insert([]byte(fmt.Sprintf("item-%d", i%50000)))
+	}
+
+	okay = ok
+}
+
+func BenchmarkInsertUnique(b *testing.B) {
+	var ok bool
+	filter := StdFilter()
+	fd, _ := os.Open("/usr/share/dict/words")
+	defer fd.Close()
+
+	scanner := bufio.NewScanner(fd)
+	var wordCount int
+	var totalWords int
+	var values [][]byte
+	for scanner.Scan() {
+		word := []byte(scanner.Text())
+		totalWords++
+
+		if filter.Insert(word) {
+			wordCount++
+		}
+		values = append(values, word)
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		ok = filter.InsertUnique(values[i%totalWords])
+	}
+
+	okay = ok
+}
+
+func BenchmarkLookup(b *testing.B) {
+	var ok bool
+	filter := StdFilter()
+	fd, _ := os.Open("/usr/share/dict/words")
+	defer fd.Close()
+
+	scanner := bufio.NewScanner(fd)
+	var wordCount int
+	var totalWords int
+	var values [][]byte
+	for scanner.Scan() {
+		word := []byte(scanner.Text())
+		totalWords++
+
+		if filter.Insert(word) {
+			wordCount++
+		}
+		values = append(values, word)
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		ok = filter.Lookup(values[i%totalWords])
+	}
+
+	okay = ok
+}
+
+func BenchmarkDelete(b *testing.B) {
+	var ok bool
+	filter := StdFilter()
+	fd, _ := os.Open("/usr/share/dict/words")
+	defer fd.Close()
+
+	scanner := bufio.NewScanner(fd)
+	var wordCount int
+	var totalWords int
+	var values [][]byte
+	for scanner.Scan() {
+		word := []byte(scanner.Text())
+		totalWords++
+
+		if filter.Insert(word) {
+			wordCount++
+		}
+		values = append(values, word)
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		ok = filter.Delete(values[i%totalWords])
+	}
+
+	okay = ok
 }
