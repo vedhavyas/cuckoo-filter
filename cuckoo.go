@@ -35,7 +35,7 @@ type Filter struct {
 	maxKicks     uint16
 
 	// protects above fields
-	mu *sync.RWMutex
+	mu sync.RWMutex
 }
 
 // initBuckets initialises the buckets
@@ -60,7 +60,6 @@ func newFilter(tb uint32, bs uint8, hash hash.Hash32) *Filter {
 		totalBuckets: tb,
 		hash:         hash,
 		maxKicks:     defaultMaxKicks,
-		mu:           &sync.RWMutex{},
 	}
 }
 
