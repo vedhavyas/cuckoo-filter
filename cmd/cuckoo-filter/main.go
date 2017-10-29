@@ -36,7 +36,7 @@ func lookup(f *cuckoo.Filter, n uint32) (tt string, mw uint32) {
 }
 
 func main() {
-	var n uint32 = 16 << 20
+	var n uint32 = 500000000
 	f := cuckoo.NewFilterWithBucketSize(n, 8)
 	tt, ff := loadMax(f, n)
 	fmt.Println(" Maximum Inserts")

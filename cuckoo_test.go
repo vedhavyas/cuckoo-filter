@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 	"testing"
 
 	"github.com/spaolacci/murmur3"
@@ -18,13 +17,13 @@ func Test_fingerprintOf(t *testing.T) {
 	}{
 		{
 			b: []byte("hello"),
-			r: 26725,
+			r: &[2]byte{104, 101},
 			h: 19595036,
 		},
 
 		{
-			b: []byte(strconv.Itoa(12345)),
-			r: 12594,
+			b: []byte("12345"),
+			r: &[2]byte{49, 50},
 			h: 19870548,
 		},
 	}
@@ -33,7 +32,7 @@ func Test_fingerprintOf(t *testing.T) {
 	for _, c := range tests {
 		fp := fingerprintOf(c.b)
 		fph := fingerprintHash(fp, h)
-		if c.r != fp {
+		if *c.r != *fp {
 			t.Fatalf("expected %v bytes but got %v", c.r, fp)
 		}
 
@@ -51,19 +50,19 @@ func Test_addToBucket(t *testing.T) {
 	}{
 		{
 			i:  100,
-			fp: 36959,
+			fp: &[2]byte{49, 50},
 			r:  true,
 		},
 
 		{
 			i:  120,
-			fp: 1232,
+			fp: &[2]byte{100, 99},
 			r:  true,
 		},
 
 		{
 			i:  156400,
-			fp: 7626,
+			fp: &[2]byte{250, 127},
 			r:  true,
 		},
 	}
