@@ -1,7 +1,6 @@
 package cuckoo
 
 import (
-	"encoding/binary"
 	"hash"
 	"math/rand"
 	"sync"
@@ -17,10 +16,7 @@ const (
 )
 
 // fingerprint of the item
-type fingerprint uint16
-
-// emptyFingerprint represents an empty fingerprint
-var emptyFingerprint fingerprint
+type fingerprint *[2]byte
 
 // bucket with b fingerprints per bucket
 type bucket []fingerprint
@@ -89,11 +85,11 @@ func nextPowerOf2(v uint32) (n uint32) {
 // deleteFrom deletes fingerprint from bucket if exists
 func deleteFrom(b bucket, fp fingerprint) bool {
 	for i := range b {
-		if b[i] != fp {
+		if b[i] == nil || *b[i] != *fp {
 			continue
 		}
 
-		b[i] = emptyFingerprint
+		b[i] = nil
 		return true
 	}
 
@@ -103,7 +99,7 @@ func deleteFrom(b bucket, fp fingerprint) bool {
 // containsIn returns if the given fingerprint exists in bucket
 func containsIn(b bucket, fp fingerprint) bool {
 	for i := range b {
-		if b[i] == fp {
+		if b[i] != nil && *b[i] == *fp {
 			return true
 		}
 	}
@@ -114,7 +110,7 @@ func containsIn(b bucket, fp fingerprint) bool {
 // addToBucket will add fp to the bucket i in filter
 func addToBucket(b bucket, fp fingerprint) bool {
 	for j := range b {
-		if b[j] != emptyFingerprint {
+		if b[j] != nil {
 			continue
 		}
 
@@ -135,13 +131,11 @@ func hashOf(x []byte, hash hash.Hash32) (uint32, []byte) {
 
 // fingerprintOf returns the fingerprint of x with size using hash
 func fingerprintOf(xb []byte) (fp fingerprint) {
-	return fingerprint(binary.BigEndian.Uint16(xb))
+	return fingerprint(&[2]byte{xb[0], xb[1]})
 }
 
 func fingerprintHash(fp fingerprint, hash hash.Hash32) (fph uint32) {
-	b := make([]byte, 2, 2)
-	binary.BigEndian.PutUint16(b, uint16(fp))
-	fph, _ = hashOf(b, hash)
+	fph, _ = hashOf([]byte{fp[0], fp[1]}, hash)
 	return fph
 }
 
