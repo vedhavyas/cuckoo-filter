@@ -116,7 +116,7 @@ Time Taken: 27.556190215s
 =================
 Total lookups: 16528881
 Failed lookups: 1
-Expected failed lookups: 0
+Expected failed lookups: 1
 Load factor: 0.9852
 Time Taken: 26.037199544s
 =================
