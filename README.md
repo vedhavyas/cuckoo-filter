@@ -79,45 +79,48 @@ Lookup says if the given item exists in filter
 
 ### 16 << 20 inserts with bucket size 4
 ```
-  Maximum Inserts
- =================
- Expected inserts: 16777216
- Total inserted: 16025877
- Load factor: 0.9552
- First failure at: 16025877
- Time Taken: 31.103796543s
- =================
- 
- 
-  Lookups
- =================
- Total lookups: 16025877
- Failed lookups: 1
- Expected failed lookups: 1 (Due to the final displacement)
- Load factor: 0.9552
- Time Taken: 19.477595601s
- =================
+Maximum Inserts
+=================
+Expected inserts: 16777216
+Total inserted: 16025877
+Load factor: 0.9552
+First failure at: 16025877
+Time Taken: 26.886751899s
+=================
 
+
+Lookups
+=================
+Total lookups: 16025877
+Failed lookups: 1
+Expected failed lookups: 1 (Due to final displacement)
+Load factor: 0.9552
+Time Taken: 11.633248567s
+=================
+
+Occupied Memory: 344M
 ```
 
 ### 16 << 20 inserts with bucket size 8
 ```
- Maximum Inserts
+Maximum Inserts
 =================
 Expected inserts: 16777216
 Total inserted: 16528881
 Load factor: 0.9852
 First failure at: 16528881
-Time Taken: 27.556190215s
+Time Taken: 16.131773725s
 =================
 
 
- Lookups
+Lookups
 =================
 Total lookups: 16528881
 Failed lookups: 1
-Expected failed lookups: 1
+Expected failed lookups: 1 (Due to final displacement)
 Load factor: 0.9852
-Time Taken: 26.037199544s
+Time Taken: 12.858070878s
 =================
+
+Occupied Memory: 210M
 ```

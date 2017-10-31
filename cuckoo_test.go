@@ -17,13 +17,13 @@ func Test_fingerprintOf(t *testing.T) {
 	}{
 		{
 			b: []byte("hello"),
-			r: &[2]byte{104, 101},
+			r: 26725,
 			h: 19595036,
 		},
 
 		{
 			b: []byte("12345"),
-			r: &[2]byte{49, 50},
+			r: 12594,
 			h: 19870548,
 		},
 	}
@@ -32,7 +32,7 @@ func Test_fingerprintOf(t *testing.T) {
 	for _, c := range tests {
 		fp := fingerprintOf(c.b)
 		fph := fingerprintHash(fp, h)
-		if *c.r != *fp {
+		if c.r != fp {
 			t.Fatalf("expected %v bytes but got %v", c.r, fp)
 		}
 
@@ -50,26 +50,26 @@ func Test_addToBucket(t *testing.T) {
 	}{
 		{
 			i:  100,
-			fp: &[2]byte{49, 50},
+			fp: 123,
 			r:  true,
 		},
 
 		{
 			i:  120,
-			fp: &[2]byte{100, 99},
+			fp: 2345,
 			r:  true,
 		},
 
 		{
 			i:  156400,
-			fp: &[2]byte{250, 127},
+			fp: 1223,
 			r:  true,
 		},
 	}
 
 	f := StdFilter()
 	for _, c := range tests {
-		r := addToBucket(f.buckets[c.i], c.fp)
+		r := addToBucket(&f.buckets[c.i], f.bucketSize, c.fp)
 		if r != c.r {
 			t.Fatalf("expected %t but got %t", c.r, r)
 		}

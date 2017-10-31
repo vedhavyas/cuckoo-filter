@@ -37,7 +37,7 @@ func lookup(f *cuckoo.Filter, n uint32) (tt string, mw uint32) {
 
 func main() {
 	var n uint32 = 16 << 20
-	f := cuckoo.NewFilterWithBucketSize(n, 8)
+	f, _ := cuckoo.NewFilterWithBucketSize(n, 4)
 	tt, ff := loadMax(f, n)
 	fmt.Println(" Maximum Inserts")
 	fmt.Println("=================")
@@ -54,7 +54,7 @@ func main() {
 	fmt.Println("=================")
 	fmt.Printf("Total lookups: %d\n", f.Count())
 	fmt.Printf("Failed lookups: %d\n", mw)
-	fmt.Printf("Expected failed lookups: %d\n", 0)
+	fmt.Printf("Expected failed lookups: %d\n", 1)
 	fmt.Printf("Load factor: %0.4f\n", f.LoadFactor())
 	fmt.Printf("Time Taken: %s\n", tt)
 	fmt.Println("=================")
