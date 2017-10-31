@@ -124,3 +124,27 @@ Time Taken: 12.858070878s
 
 Occupied Memory: 210M
 ```
+
+### 16 << 20 inserts with max bucket size(16)
+```
+Maximum Inserts
+=================
+Expected inserts: 16777216
+Total inserted: 16681042
+Load factor: 0.9943
+First failure at: 16681042
+Time Taken: 14.79536521s
+=================
+
+
+Lookups
+=================
+Total lookups: 16681042
+Failed lookups: 1
+Expected failed lookups: 1
+Load factor: 0.9943
+Time Taken: 13.322471397s
+=================
+
+Occupied Memory: 141M
+```
