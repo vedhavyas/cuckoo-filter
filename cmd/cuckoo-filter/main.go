@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"time"
-
-	"log"
 
 	"github.com/vedhavyas/cuckoo-filter"
 )
