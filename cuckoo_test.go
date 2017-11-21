@@ -6,6 +6,10 @@ import (
 	"os"
 	"testing"
 
+	"bytes"
+
+	"reflect"
+
 	"github.com/spaolacci/murmur3"
 )
 
@@ -187,6 +191,51 @@ func TestFilter_Delete(t *testing.T) {
 
 		if f.Count() != c.count {
 			t.Fatalf("expected %d count but got %d", c.count, f.Count())
+		}
+	}
+}
+
+func TestFilter_EncodeDecode(t *testing.T) {
+	f := StdFilter()
+	data := []string{"hello", "hello, World", "This Worked"}
+	for _, s := range data {
+		f.Insert([]byte(s))
+	}
+
+	var b bytes.Buffer
+	err := f.Encode(&b)
+	if err != nil {
+		t.Fatalf("unexpected error while encoding: %v", err)
+	}
+
+	df, err := Decode(&b)
+	if err != nil {
+		t.Fatalf("unexpected error while decoding: %v", err)
+	}
+
+	if f.count != df.count {
+		t.Fatalf("count mismatch")
+	}
+
+	if f.bucketSize != df.bucketSize {
+		t.Fatalf("bucketsize mismatch")
+	}
+
+	if f.totalBuckets != df.totalBuckets {
+		t.Fatalf("totalbuckets mismatch")
+	}
+
+	if f.maxKicks != df.maxKicks {
+		t.Fatalf("maxkicks mismatch")
+	}
+
+	if !reflect.DeepEqual(f.buckets, df.buckets) {
+		t.Fatalf("buckets mismatch")
+	}
+
+	for _, s := range data {
+		if !df.Lookup([]byte(s)) {
+			t.Fatalf("lookup failed: %s", s)
 		}
 	}
 }

@@ -74,6 +74,20 @@ func (f *Filter) Lookup(x []byte) bool
 ```
 Lookup says if the given item exists in filter
 
+#### func (*Filter) Encode
+
+```go
+func (f *Filter) Encode(w io.Writer) error
+```
+Encode gob encodes the filter to passed writer
+
+#### func Decode
+
+```go
+func Decode(r io.Reader) (*Filter, error)
+```
+Decode decodes and returns the filter instance
+
 
 ## Benchmarks
 
