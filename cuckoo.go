@@ -2,13 +2,12 @@ package cuckoo
 
 import (
 	"encoding/binary"
+	"encoding/gob"
 	"fmt"
 	"hash"
+	"io"
 	"math/rand"
 	"sync"
-
-	"encoding/gob"
-	"io"
 
 	"github.com/spaolacci/murmur3"
 )

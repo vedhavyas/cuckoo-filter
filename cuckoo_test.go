@@ -2,13 +2,11 @@ package cuckoo
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
-	"testing"
-
-	"bytes"
-
 	"reflect"
+	"testing"
 
 	"github.com/spaolacci/murmur3"
 )
