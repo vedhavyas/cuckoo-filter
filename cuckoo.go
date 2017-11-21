@@ -2,8 +2,10 @@ package cuckoo
 
 import (
 	"encoding/binary"
+	"encoding/gob"
 	"fmt"
 	"hash"
+	"io"
 	"math/rand"
 	"sync"
 
@@ -26,8 +28,8 @@ var emptyFingerprint fingerprint
 
 // bucket with n fingerprints
 type bucket struct {
-	track uint16
-	fps   []fingerprint
+	Track uint16
+	FPs   []fingerprint
 }
 
 // Filter is the cuckoo-filter
@@ -43,11 +45,20 @@ type Filter struct {
 	mu sync.RWMutex
 }
 
+// gobFilter for encoding and decoding the Filter
+type gobFilter struct {
+	Count        uint32
+	Buckets      []bucket
+	BucketSize   uint8
+	TotalBuckets uint32
+	MaxKicks     uint16
+}
+
 // initBuckets initialises the buckets
 func initBuckets(totalBuckets uint32, bucketSize uint8) []bucket {
 	buckets := make([]bucket, totalBuckets, totalBuckets)
 	for i := range buckets {
-		buckets[i] = bucket{fps: make([]fingerprint, bucketSize, bucketSize)}
+		buckets[i] = bucket{FPs: make([]fingerprint, bucketSize, bucketSize)}
 	}
 
 	return buckets
@@ -95,12 +106,12 @@ func nextPowerOf2(v uint32) (n uint32) {
 	return n
 }
 
-// isSet returns true if the i th bit in the track is 1
+// isSet returns true if the i th bit in the Track is 1
 func isSet(track uint16, i uint8) bool {
 	return track|(1<<uint8(i)) == track
 }
 
-// unSet un sets the i th bit in track
+// unSet un sets the i th bit in Track
 func unSet(track uint16, i uint8) uint16 {
 	return track ^ 1<<i
 }
@@ -112,12 +123,12 @@ func set(track uint16, i uint8) uint16 {
 // deleteFrom deletes fingerprint from bucket if exists
 func deleteFrom(b *bucket, bs uint8, fp fingerprint) bool {
 	for i := uint8(0); i < bs; i++ {
-		if !isSet(b.track, i) || b.fps[i] != fp {
+		if !isSet(b.Track, i) || b.FPs[i] != fp {
 			continue
 		}
 
-		b.fps[i] = emptyFingerprint
-		b.track = unSet(b.track, i)
+		b.FPs[i] = emptyFingerprint
+		b.Track = unSet(b.Track, i)
 		return true
 	}
 
@@ -127,7 +138,7 @@ func deleteFrom(b *bucket, bs uint8, fp fingerprint) bool {
 // containsIn returns if the given fingerprint exists in bucket
 func containsIn(b bucket, bs uint8, fp fingerprint) bool {
 	for i := uint8(0); i < bs; i++ {
-		if isSet(b.track, i) && b.fps[i] == fp {
+		if isSet(b.Track, i) && b.FPs[i] == fp {
 			return true
 		}
 	}
@@ -138,12 +149,12 @@ func containsIn(b bucket, bs uint8, fp fingerprint) bool {
 // addToBucket will add fp to the bucket i in filter
 func addToBucket(b *bucket, bs uint8, fp fingerprint) bool {
 	for i := uint8(0); i < bs; i++ {
-		if isSet(b.track, i) {
+		if isSet(b.Track, i) {
 			continue
 		}
 
-		b.fps[i] = fp
-		b.track = set(b.track, i)
+		b.FPs[i] = fp
+		b.Track = set(b.Track, i)
 		return true
 	}
 
@@ -184,8 +195,8 @@ func alternateIndex(totalBuckets, i, fph uint32) (j uint32) {
 
 func swapFingerprint(b *bucket, fp fingerprint) fingerprint {
 	var sfp fingerprint
-	k := rand.Intn(len(b.fps))
-	sfp, b.fps[k] = b.fps[k], fp
+	k := rand.Intn(len(b.FPs))
+	sfp, b.FPs[k] = b.FPs[k], fp
 	return sfp
 }
 
@@ -338,4 +349,41 @@ func (f *Filter) LoadFactor() float64 {
 	defer f.mu.RUnlock()
 
 	return float64(f.count) / (float64(uint32(f.bucketSize) * f.totalBuckets))
+}
+
+// Encode gob encodes the filter to passed writer
+func (f *Filter) Encode(w io.Writer) error {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	gf := &gobFilter{
+		Count:        f.count,
+		Buckets:      f.buckets,
+		BucketSize:   f.bucketSize,
+		TotalBuckets: f.totalBuckets,
+		MaxKicks:     f.maxKicks,
+	}
+	ge := gob.NewEncoder(w)
+	return ge.Encode(gf)
+}
+
+// Decode decodes and returns the filter instance
+func Decode(r io.Reader) (*Filter, error) {
+	gd := gob.NewDecoder(r)
+	gf := &gobFilter{}
+	err := gd.Decode(gf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode filter: %v", err)
+	}
+
+	f := &Filter{
+		count:        gf.Count,
+		buckets:      gf.Buckets,
+		bucketSize:   gf.BucketSize,
+		totalBuckets: gf.TotalBuckets,
+		hash:         murmur3.New32WithSeed(seed),
+		maxKicks:     gf.MaxKicks,
+	}
+
+	return f, nil
 }
