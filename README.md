@@ -96,23 +96,20 @@ Decode decodes and returns the filter instance
 Maximum Inserts
 =================
 Expected inserts: 16777216
-Total inserted: 16025877
-Load factor: 0.9552
-First failure at: 16025877
-Time Taken: 26.886751899s
+Total inserted: 16022242
+Load factor: 0.9550
+Time Taken: 18.118615793s
 =================
 
 
 Lookups
 =================
-Total lookups: 16025877
-Failed lookups: 1
-Expected failed lookups: 1 (Due to final displacement)
-Load factor: 0.9552
-Time Taken: 11.633248567s
+Total lookups: 16022242
+Failed lookups: 0
+Expected failed lookups: 0
+Load factor: 0.9550
+Time Taken: 11.394561881s
 =================
-
-Occupied Memory: 344M
 ```
 
 ### 16 << 20 inserts with bucket size 8
@@ -120,23 +117,21 @@ Occupied Memory: 344M
 Maximum Inserts
 =================
 Expected inserts: 16777216
-Total inserted: 16528881
-Load factor: 0.9852
-First failure at: 16528881
-Time Taken: 16.131773725s
+Total inserted: 16525558
+Load factor: 0.9850
+Time Taken: 17.478650065s
 =================
 
 
 Lookups
 =================
-Total lookups: 16528881
-Failed lookups: 1
-Expected failed lookups: 1 (Due to final displacement)
-Load factor: 0.9852
-Time Taken: 12.858070878s
+Total lookups: 16525558
+Failed lookups: 0
+Expected failed lookups: 0
+Load factor: 0.9850
+Time Taken: 12.087359139s
 =================
 
-Occupied Memory: 210M
 ```
 
 ### 16 << 20 inserts with max bucket size(16)
@@ -144,21 +139,19 @@ Occupied Memory: 210M
 Maximum Inserts
 =================
 Expected inserts: 16777216
-Total inserted: 16681042
-Load factor: 0.9943
-First failure at: 16681042
-Time Taken: 14.79536521s
+Total inserted: 16676553
+Load factor: 0.9940
+Time Taken: 16.280342789s
 =================
 
 
 Lookups
 =================
-Total lookups: 16681042
-Failed lookups: 1
-Expected failed lookups: 1
-Load factor: 0.9943
-Time Taken: 13.322471397s
+Total lookups: 16676553
+Failed lookups: 0
+Expected failed lookups: 0
+Load factor: 0.9940
+Time Taken: 12.45013918s
 =================
 
-Occupied Memory: 141M
 ```

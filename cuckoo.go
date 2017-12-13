@@ -193,6 +193,30 @@ func alternateIndex(totalBuckets, i, fph uint32) (j uint32) {
 	return (i ^ fph) % totalBuckets
 }
 
+// estimatedLoadFactor returns an estimated max load factor based on bucket size
+func estimatedLoadFactor(bucketSize uint8) float64 {
+	switch  {
+	case bucketSize < 8:
+		return 0.955
+	case bucketSize < 16:
+		return 0.985
+	default:
+		return 0.994
+	}
+}
+
+// isReliable returns if the filter is reliable for another insert
+func isReliable(f *Filter) bool {
+	clf := f.LoadFactor()
+	elf := estimatedLoadFactor(f.bucketSize)
+	if clf < elf {
+		return true
+	}
+
+	return false
+}
+
+// swapFingerprint swaps a random fp from the bucket with provided fp
 func swapFingerprint(b *bucket, fp fingerprint) fingerprint {
 	var sfp fingerprint
 	k := rand.Intn(len(b.FPs))
@@ -281,6 +305,10 @@ func check(x []byte) ([]byte, bool) {
 // Insert inserts the item to the filter
 // returns error of filter is full
 func (f *Filter) Insert(x []byte) bool {
+	if !isReliable(f) {
+		return false
+	}
+
 	x, ok := check(x)
 	if !ok {
 		return false
@@ -294,6 +322,10 @@ func (f *Filter) Insert(x []byte) bool {
 
 // InsertUnique inserts only unique items
 func (f *Filter) InsertUnique(x []byte) bool {
+	if !isReliable(f) {
+		return false
+	}
+
 	x, ok := check(x)
 	if !ok {
 		return false
