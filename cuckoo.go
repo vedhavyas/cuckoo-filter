@@ -195,7 +195,7 @@ func alternateIndex(totalBuckets, i, fph uint32) (j uint32) {
 
 // estimatedLoadFactor returns an estimated max load factor based on bucket size
 func estimatedLoadFactor(bucketSize uint8) float64 {
-	switch  {
+	switch {
 	case bucketSize < 8:
 		return 0.955
 	case bucketSize < 16:
@@ -289,8 +289,8 @@ func deleteItem(f *Filter, x []byte) (ok bool) {
 	return false
 }
 
-// check the bytes
-func check(x []byte) ([]byte, bool) {
+// sanitize the bytes
+func sanitize(x []byte) ([]byte, bool) {
 	if len(x) == 0 {
 		return nil, false
 	}
@@ -309,7 +309,7 @@ func (f *Filter) Insert(x []byte) bool {
 		return false
 	}
 
-	x, ok := check(x)
+	x, ok := sanitize(x)
 	if !ok {
 		return false
 	}
@@ -326,7 +326,7 @@ func (f *Filter) InsertUnique(x []byte) bool {
 		return false
 	}
 
-	x, ok := check(x)
+	x, ok := sanitize(x)
 	if !ok {
 		return false
 	}
@@ -343,7 +343,7 @@ func (f *Filter) InsertUnique(x []byte) bool {
 
 // Lookup says if the given item exists in filter
 func (f *Filter) Lookup(x []byte) bool {
-	x, ok := check(x)
+	x, ok := sanitize(x)
 	if !ok {
 		return false
 	}
@@ -356,7 +356,7 @@ func (f *Filter) Lookup(x []byte) bool {
 
 // Delete deletes the item from the filter
 func (f *Filter) Delete(x []byte) bool {
-	x, ok := check(x)
+	x, ok := sanitize(x)
 	if !ok {
 		return false
 	}
