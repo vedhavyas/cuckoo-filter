@@ -42,7 +42,7 @@ type Filter struct {
 	maxKicks     uint16
 
 	// protects above fields
-	mu sync.RWMutex
+	L sync.RWMutex
 }
 
 // gobFilter for encoding and decoding the Filter
@@ -207,7 +207,7 @@ func estimatedLoadFactor(bucketSize uint8) float64 {
 
 // isReliable returns if the filter is reliable for another insert
 func isReliable(f *Filter) bool {
-	clf := f.LoadFactor()
+	clf := f.ULoadFactor()
 	elf := estimatedLoadFactor(f.bucketSize)
 	if clf < elf {
 		return true
@@ -303,8 +303,15 @@ func sanitize(x []byte) ([]byte, bool) {
 }
 
 // Insert inserts the item to the filter
-// returns error of filter is full
 func (f *Filter) Insert(x []byte) bool {
+	f.L.Lock()
+	defer f.L.Unlock()
+
+	return f.UInsert(x)
+}
+
+// UInsert inserts the item to the filter. Not thread safe
+func (f *Filter) UInsert(x []byte) bool {
 	if !isReliable(f) {
 		return false
 	}
@@ -313,15 +320,20 @@ func (f *Filter) Insert(x []byte) bool {
 	if !ok {
 		return false
 	}
-
-	f.mu.Lock()
-	defer f.mu.Unlock()
 
 	return insert(f, x)
 }
 
 // InsertUnique inserts only unique items
 func (f *Filter) InsertUnique(x []byte) bool {
+	f.L.Lock()
+	defer f.L.Unlock()
+
+	return f.UInsertUnique(x)
+}
+
+// UInsertUnique inserts only unique items. Not thread safe
+func (f *Filter) UInsertUnique(x []byte) bool {
 	if !isReliable(f) {
 		return false
 	}
@@ -331,63 +343,77 @@ func (f *Filter) InsertUnique(x []byte) bool {
 		return false
 	}
 
-	if f.Lookup(x) {
+	if f.ULookup(x) {
 		return true
 	}
-
-	f.mu.Lock()
-	defer f.mu.Unlock()
 
 	return insert(f, x)
 }
 
-// Lookup says if the given item exists in filter
+// Lookup checks if item exists in filter
 func (f *Filter) Lookup(x []byte) bool {
+	f.L.RLock()
+	defer f.L.RUnlock()
+
+	return f.ULookup(x)
+}
+
+// ULookup checks if item exists in filter. Not thread safe
+func (f *Filter) ULookup(x []byte) bool {
 	x, ok := sanitize(x)
 	if !ok {
 		return false
 	}
-
-	f.mu.RLock()
-	defer f.mu.RUnlock()
 
 	return lookup(f, x)
 }
 
 // Delete deletes the item from the filter
 func (f *Filter) Delete(x []byte) bool {
+	f.L.Lock()
+	defer f.L.Unlock()
+
+	return f.UDelete(x)
+}
+
+// UDelete deletes the item from the filter. Not thread safe
+func (f *Filter) UDelete(x []byte) bool {
 	x, ok := sanitize(x)
 	if !ok {
 		return false
 	}
-
-	f.mu.Lock()
-	defer f.mu.Unlock()
 
 	return deleteItem(f, x)
 }
 
 // Count returns total inserted items into filter
 func (f *Filter) Count() uint32 {
-	f.mu.RLock()
-	defer f.mu.RUnlock()
+	f.L.RLock()
+	defer f.L.RUnlock()
 
+	return f.UCount()
+}
+
+// UCount returns total inserted items into filter. Not thread safe
+func (f *Filter) UCount() uint32 {
 	return f.count
 }
 
 // LoadFactor returns the load factor of the filter
 func (f *Filter) LoadFactor() float64 {
-	f.mu.RLock()
-	defer f.mu.RUnlock()
+	f.L.RLock()
+	defer f.L.RUnlock()
+	return f.ULoadFactor()
+}
 
+// ULoadFactor returns the load factor of the filter. Not thread safe
+func (f *Filter) ULoadFactor() float64 {
 	return float64(f.count) / (float64(uint32(f.bucketSize) * f.totalBuckets))
 }
 
 // Encode gob encodes the filter to passed writer
 func (f *Filter) Encode(w io.Writer) error {
-	f.mu.RLock()
-	defer f.mu.RUnlock()
-
+	f.L.RLock()
 	gf := &gobFilter{
 		Count:        f.count,
 		Buckets:      f.buckets,
@@ -395,6 +421,8 @@ func (f *Filter) Encode(w io.Writer) error {
 		TotalBuckets: f.totalBuckets,
 		MaxKicks:     f.maxKicks,
 	}
+	f.L.RUnlock()
+
 	ge := gob.NewEncoder(w)
 	return ge.Encode(gf)
 }
