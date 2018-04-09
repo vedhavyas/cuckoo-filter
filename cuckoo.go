@@ -108,7 +108,7 @@ func nextPowerOf2(v uint32) (n uint32) {
 
 // isSet returns true if the i th bit in the Track is 1
 func isSet(track uint16, i uint8) bool {
-	return track|(1<<uint8(i)) == track
+	return track|(1<<i) == track
 }
 
 // unSet un sets the i th bit in Track
