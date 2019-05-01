@@ -352,8 +352,8 @@ func (f *Filter) UInsertUnique(x []byte) bool {
 
 // Lookup checks if item exists in filter
 func (f *Filter) Lookup(x []byte) bool {
-	f.L.RLock()
-	defer f.L.RUnlock()
+	f.L.Lock()
+	defer f.L.Unlock()
 
 	return f.ULookup(x)
 }
