@@ -413,7 +413,9 @@ func (f *Filter) ULoadFactor() float64 {
 
 // Encode gob encodes the filter to passed writer
 func (f *Filter) Encode(w io.Writer) error {
+	// hold the read lock till we encode the data to the writer
 	f.L.RLock()
+	defer f.L.RUnlock()
 	gf := &gobFilter{
 		Count:        f.count,
 		Buckets:      f.buckets,
@@ -421,7 +423,6 @@ func (f *Filter) Encode(w io.Writer) error {
 		TotalBuckets: f.totalBuckets,
 		MaxKicks:     f.maxKicks,
 	}
-	f.L.RUnlock()
 
 	ge := gob.NewEncoder(w)
 	return ge.Encode(gf)
